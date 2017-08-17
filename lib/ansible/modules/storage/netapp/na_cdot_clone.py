@@ -101,7 +101,7 @@ class NetAppCDOTClone(object):
             state=dict(required=True, choices=['present', 'absent']),
             name=dict(required=True, type='str'),
             is_online=dict(required=False, type='bool', default=True, aliases=['online']),
-            parent_vol=dict(type='str'),
+            parent_vol=dict(type='str', aliases=['parent_volume']),
             snapshot_name=dict(required=False, type='str'),
             vserver=dict(required=True, type='str', default=None),
         ))
@@ -194,7 +194,29 @@ class NetAppCDOTClone(object):
                                   exception=traceback.format_exc())
 
     def change_volume_state(self):
-        print("change_volume_state not implemented")
+        """
+        Change volume's state (offline/online).
+        """
+        state_requested = None
+        if self.is_online:
+            # Requested state is 'online'.
+            state_requested = "online"
+            volume_change_state = netapp_utils.zapi.NaElement.create_node_with_children(
+                'volume-online',
+                **{'name': self.name})
+        else:
+            # Requested state is 'offline'.
+            state_requested = "offline"
+            volume_change_state = netapp_utils.zapi.NaElement.create_node_with_children(
+                'volume-offline',
+                **{'name': self.name})
+        try:
+            self.server.invoke_successfully(volume_change_state,
+                                            enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error changing the state of volume %s to %s: %s' %
+                                  (self.name, state_requested, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def delete_volume(self):
         print("delete_volume not implemented")
@@ -211,7 +233,7 @@ class NetAppCDOTClone(object):
                 changed = True
 
             elif self.state == 'present':
-                if (clone_detail['is_online'] is not None) and (volume_detail['is_online'] != self.is_online):
+                if (clone_detail['is_online'] is not None) and (clone_detail['is_online'] != self.is_online):
                     changed = True
 
         else:
@@ -227,8 +249,8 @@ class NetAppCDOTClone(object):
                         self.create_clone()
 
                     else:
-                        if volume_detail['is_online'] is not \
-                                None and volume_detail['is_online'] != \
+                        if clone_detail['is_online'] is not \
+                                None and clone_detail['is_online'] != \
                                 self.is_online:
                             self.change_volume_state()
 

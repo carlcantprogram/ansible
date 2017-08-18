@@ -186,6 +186,9 @@ class NetAppCDOTClone(object):
             'volume-clone-create', **{'volume': self.name,
                                 'parent-volume': self.parent_vol})
 
+        if (self.snapshot_name):
+            clone_in.add_new_child("parent-snapshot", self.snapshot_name)
+
         try:
             self.server.invoke_successfully(clone_in,
                                             enable_tunneling=False)

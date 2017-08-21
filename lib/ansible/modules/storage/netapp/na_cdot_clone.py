@@ -193,7 +193,8 @@ class NetAppCDOTClone(object):
             self.server.invoke_successfully(clone_in,
                                             enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as e:
-            self.module.fail_json(msg='Error %s' % (to_native(e)),
+            self.module.fail_json(msg='Error cloning volume %s to %s: %s' %
+                                  (self.parent_vol, self.name, to_native(e)),
                                   exception=traceback.format_exc())
 
     def change_volume_state(self):

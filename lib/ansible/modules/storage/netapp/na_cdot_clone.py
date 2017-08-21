@@ -223,7 +223,13 @@ class NetAppCDOTClone(object):
                                   exception=traceback.format_exc())
 
     def delete_volume(self):
-        print("delete_volume not implemented")
+        volume_delete = netapp_utils.zapi.NaElement.create_node_with_children(
+                'volume-destroy', **{'name': self.name, 'unmount-and-offline': 'true'})
+        try:
+            self.server.invoke_successfully(volume_delete, enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as e:
+            self.module.fail_json(msg='Error deleting clone %s: %s' % (self.name, to_native(e)),
+                                  exception=traceback.format_exc())
 
     def apply(self):
         changed = False

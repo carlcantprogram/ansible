@@ -138,6 +138,13 @@ class NetAppCDOTClone(object):
         :return: Details about the clone. None if not found.
         :rtype: dict
         """
+        #
+        # volume_info (volume-get-iter) -> query -> volume_attributes 
+        #   -> volume_id_attributes -> name
+        #
+        # volume-attributes -> volume-clone-attributes -> volume-clone-parent-attributes
+        #    - name , - snapshot-name
+        #
         volume_info = netapp_utils.zapi.NaElement('volume-get-iter')
         volume_attributes = netapp_utils.zapi.NaElement('volume-attributes')
         volume_id_attributes = netapp_utils.zapi.NaElement('volume-id-attributes')
@@ -163,6 +170,10 @@ class NetAppCDOTClone(object):
             volume_space_attributes = volume_attributes.get_child_by_name(
                 'volume-space-attributes')
             current_size = volume_space_attributes.get_child_content('size')
+            # Get clone parent name and snapshot
+            #clone_parent_attributes = volume_attributes.get_child_by_name('volume-clone-attributes').get_child_by_name('volume-clone-parent-attributes')
+            #clone_parent_name = clone_parent_attributes.get_child_by_name('name')
+            #clone_parent_snapshot = clone_parent_attributes.get_child_by_name('snapshot-name')
 
             # Get volume's state (online/offline)
             volume_state_attributes = volume_attributes.get_child_by_name(
